@@ -87,6 +87,7 @@ def run_module():
     argument_spec = cml_argument_spec()
     argument_spec.update(
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
+        wait=dict(type='str', choices=['true', 'false'], default='true'),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         file=dict(type='str'),
     )
@@ -114,7 +115,22 @@ def run_module():
                 lab = cml.client.create_lab(title=cml.params['lab'])
             lab.title = cml.params['lab']
             cml.result['changed'] = True
-
+    elif cml.params['state'] == 'started':
+        if lab is None:
+            if cml.params['file']:
+                lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
+                if cml.params['wait'] == 'false':
+                    lab.start(wait=False)
+                else:
+                    lab.start(wait=True)
+            else:
+                lab = cml.client.create_lab(title=cml.params['lab'])
+                if cml.params['wait'] == 'false':
+                    lab.start(wait=False)
+                else:
+                    lab.start(wait=True)
+            lab.title = cml.params['lab']
+            cml.result['changed'] = True
     elif cml.params['state'] == 'absent':
         if lab:
             cml.result['changed'] = True
