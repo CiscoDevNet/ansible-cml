@@ -33,6 +33,11 @@ options:
         required: false
         choices: ['absent', 'present', 'started', 'stopped', 'wiped']
         default: present
+    wait:
+        description: Wait for lab virtual machines to boot before continuing
+        required: false
+        type: boolean
+        choices: ['True', 'False']
     validate_certs:
         description: certificate validation
         required: false
@@ -87,9 +92,9 @@ def run_module():
     argument_spec = cml_argument_spec()
     argument_spec.update(
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
-        wait=dict(type='str', choices=['true', 'false'], default='true'),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         file=dict(type='str'),
+        wait=dict(type='bool', default=False)
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -119,16 +124,10 @@ def run_module():
         if lab is None:
             if cml.params['file']:
                 lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
-                if cml.params['wait'] == 'false':
-                    lab.start(wait=False)
-                else:
-                    lab.start(wait=True)
+                lab.start(wait=cml.params['wait'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])
-                if cml.params['wait'] == 'false':
-                    lab.start(wait=False)
-                else:
-                    lab.start(wait=True)
+                lab.start(wait=cml.params['wait'])
             lab.title = cml.params['lab']
             cml.result['changed'] = True
     elif cml.params['state'] == 'absent':

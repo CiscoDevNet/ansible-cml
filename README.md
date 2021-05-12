@@ -74,7 +74,6 @@ ok: [hq-host1] => {
         password: "{{ cml_password }}"
         lab: "{{ cml_lab }}"
         state: present
-        wait: false
         file: "{{ cml_lab_file }}"
       register: results
 
