@@ -68,7 +68,7 @@ ok: [hq-host1] => {
 
 ### Create a Lab
     - name: Create the lab
-      cml_lab:
+      cisco.cml.cml_lab:
         host: "{{ cml_host }}"
         user: "{{ cml_username }}"
         password: "{{ cml_password }}"
@@ -80,7 +80,7 @@ ok: [hq-host1] => {
 ### Start a Node
 
     - name: Start Node
-      cml_node:
+      cisco.cml.cml_node:
         name: "{{ inventory_hostname }}"
         host: "{{ cml_host }}"
         user: "{{ cml_username }}"
@@ -92,7 +92,7 @@ ok: [hq-host1] => {
 
 ### Collect facts about the Lab
     - name: Collect Facts
-      cml_lab_facts:
+      cisco.cml.cml_lab_facts:
         host: "{{ cml_host }}"
         user: "{{ cml_username }}"
         password: "{{ cml_password }}"
