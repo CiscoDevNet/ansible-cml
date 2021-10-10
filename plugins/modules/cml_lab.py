@@ -1,7 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
@@ -12,37 +31,31 @@ short_description: Create, update or delete a CML Lab
 description:
   - Create, update or delete a CML Lab
 author:
-  - Steven Carter
+  - Steven Carter (@stevenca)
 requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
     lab:
-        description: The name of the CML lab
-        required: false
-        type: string
-        default: 'env: CML_LAB'
-        env:
-            - name: CML_LAB
+        description: 'The name of the CML lab (env: CML_LAB)'
+        required: true
+        type: str
     file:
         description: The name of group in which to put nodes
         required: false
-        type: string
+        type: str
     state:
         description: The desired state of the lab
         required: false
+        type: str
         choices: ['absent', 'present', 'started', 'stopped', 'wiped']
         default: present
     wait:
         description: Wait for lab virtual machines to boot before continuing
         required: false
-        type: boolean
+        default: false
+        type: bool
         choices: ['True', 'False']
-    validate_certs:
-        description: certificate validation
-        required: false
-        type: boolean
-        choices: ['yes', 'no']
 extends_documentation_fragment: cisco.cml.cml
 """
 
@@ -51,6 +64,7 @@ EXAMPLES = r"""
   hosts: localhost
   gather_facts: no
   tags:
+    - cml
     - virl
     - network
   tasks:
@@ -86,6 +100,9 @@ EXAMPLES = r"""
       meta: refresh_inventory
 """
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -94,7 +111,7 @@ def run_module():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         file=dict(type='str'),
-        wait=dict(type='bool', default=False)
+        wait=dict(type='bool', default=False, choices=['yes', 'no'])
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible

@@ -1,7 +1,26 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
@@ -12,22 +31,15 @@ short_description: Get facts about a CML Lab
 description:
   - Get facts about a CML Lab
 author:
-  - Steven Carter
+  - Steven Carter (@stevenca)
 requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
     lab:
-        description: The name of the CML lab
-        required: false
-        type: string
-        default: 'env: CML_LAB'
-        env:
-            - name: CML_LAB
-    validate_certs:
-        description: certificate validation
-        required: false
-        choices: ['yes', 'no']
+        description: 'The name of the CML lab (env: CML_LAB)'
+        required: true
+        type: str
 extends_documentation_fragment: cisco.cml.cml
 """
 EXAMPLES = r"""
@@ -48,11 +60,14 @@ EXAMPLES = r"""
         var: results
 """
 
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
-    argument_spec.update(lab=dict(type='str', required=True), )
+    argument_spec.update(lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])))
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
@@ -88,6 +103,7 @@ def run_module():
             for interface in node.interfaces():
                 if interface.discovered_ipv4 and not ansible_host:
                     ansible_host = interface.discovered_ipv4[0]
+                    ansible_host_interface = interface.label
                 cml_facts['nodes'][node.label]['interfaces'][interface.label] = {
                     'state': interface.state,
                     'ipv4_addresses': interface.discovered_ipv4,
@@ -97,9 +113,10 @@ def run_module():
                     'readbytes': interface.readbytes,
                     'readpackets': interface.readpackets,
                     'writebytes': interface.writebytes,
-                    'writepackets': interface.writepackets                    
+                    'writepackets': interface.writepackets
                 }
             cml_facts['nodes'][node.label]['ansible_host'] = ansible_host
+            cml_facts['nodes'][node.label]['ansible_host_interface'] = ansible_host_interface
     cml.result['cml_facts'] = cml_facts
     cml.exit_json(**cml.result)
 

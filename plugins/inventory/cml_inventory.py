@@ -17,22 +17,35 @@ DOCUMENTATION = r'''
         plugin:
             description: Name of the plugin
             required: true
-            choices: ['cml']
+            choices: ['cml', 'cisco.cml.cml_inventory']
+        group_tags:
+            description: The list of tags to use for group membership
+            required: false
+            type: list
         host:
             description: FQDN of the target host
             required: false
+            env:
+                - name: CML_HOST
         username:
             description: user credential for target system
             required: false
+            env:
+                - name: CML_USERNAME
         password:
             description: user pass for the target system
             required: false
+            env:
+                - name: CML_PASSWORD
         lab:
             description: The name of the cml lab
             required: false
+            env:
+                - name: CML_LAB
         group:
             description: The name of group in which to put nodes
             required: false
+            default: 'cml_hosts'
         validate_certs:
             description: certificate validation
             required: false
@@ -44,24 +57,24 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'cisco.cml.cml_inventory'
 
-    def __init__(self):
-        super(InventoryModule, self).__init__()
+    # def __init__(self):
+    #     super(InventoryModule, self).__init__()
 
-        # from config
-        self.username = None
-        self.password = None
-        self.host = None
-        self.lab = None
-        self.group = None
+    #     # from config
+    #     self.username = self.get_option('username')
+    #     self.password = self.get_option('password')
+    #     self.host = self.get_option('host')
+    #     self.lab = self.get_option('lab')
+    #     self.group = None
+    #     self.group_tags = None
 
-    def verify_file(self, path):
-
-        if super(InventoryModule, self).verify_file(path):
-            endings = ('cml.yaml', 'cml.yml')
-            if any((path.endswith(ending) for ending in endings)):
-                return True
-        display.debug("cml inventory filename must end with 'cml.yml' or 'cml.yaml'")
-        return False
+    # def verify_file(self, path):
+    #     if super(InventoryModule, self).verify_file(path):
+    #         endings = ('cml.yaml', 'cml.yml')
+    #         if any((path.endswith(ending) for ending in endings)):
+    #             return True
+    #     self.display.debug("cml inventory filename must end with 'cml.yml' or 'cml.yaml'")
+    #     return False
 
     def parse(self, inventory, loader, path, cache=True):
 
@@ -78,41 +91,16 @@ class InventoryModule(BaseInventoryPlugin):
         # if you dont define any options you can skip
         # self.set_options()
 
-        if 'CML_HOST' in os.environ and len(os.environ['CML_HOST']):
-            self.host = os.environ['CML_HOST']
-        else:
-            self.host = self.get_option('host')
-
-        self.display.vvv("cml.py - CML_HOST: {0}".format(self.host))
-
-        if 'CML_USERNAME' in os.environ and len(os.environ['CML_USERNAME']):
-            self.username = os.environ['CML_USERNAME']
-        else:
-            self.username = self.get_option('username')
-
-        self.display.vvv("cml.py - CML_USERNAME: {0}".format(self.username))
-
-        if 'CML_PASSWORD' in os.environ and len(os.environ['CML_PASSWORD']):
-            self.password = os.environ['CML_PASSWORD']
-        else:
-            self.password = self.get_option('password')
-
-        if 'CML_LAB' in os.environ and len(os.environ['CML_LAB']):
-            self.lab = os.environ['CML_LAB']
-        else:
-            self.lab = self.get_option('lab')
-
-        self.display.vvv("cml.py - CML_LAB: {0}".format(self.lab))
-
-        if not self.lab:
-            self.display.vvv("No lab defined.  Nothing to do.")
-            return
-
+        self.username = self.get_option('username')
+        self.display.vvv("nso.py - CML_USERNAME: {0}".format(self.username))
+        self.password = self.get_option('password')
+        self.display.vvv("nso.py - CML_PASSWORD: {0}".format(self.username))
+        self.host = self.get_option('host')
+        self.display.vvv("nso.py - CML_HOST: {0}".format(self.host))
+        self.lab = self.get_option('lab')
+        self.display.vvv("nso.py - CML_LAB: {0}".format(self.lab))
         self.group = self.get_option('group')
-        if self.group is None:
-            self.group = 'cml_hosts'
-
-        self.display.vvv("cml.py - Group: {0}".format(self.group))
+        self.group_tags = self.get_option('group_tags')
 
         self.inventory.set_variable('all', 'cml_host', self.host)
         self.inventory.set_variable('all', 'cml_username', self.username)
@@ -120,10 +108,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.set_variable('all', 'cml_lab', self.lab)
 
         url = 'https://{0}'.format(self.host)
-        try:
-            client = ClientLibrary(url, username=self.username, password=self.password, ssl_verify=False)
-        except:
-            raise AnsibleParserError('Unable to log into {0}'.format(url))
+        client = ClientLibrary(url, username=self.username, password=self.password, ssl_verify=False)
 
         labs = (client.find_labs_by_title(self.lab))
         if not labs:
@@ -132,7 +117,7 @@ class InventoryModule(BaseInventoryPlugin):
         try:
             group = self.inventory.add_group(self.group)
         except AnsibleError as e:
-            raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
+            raise AnsibleParserError("Unable to add group %s: %s" % (self.group, to_text(e)))
         group_dict = {}
 
         lab = labs[0]
@@ -153,6 +138,7 @@ class InventoryModule(BaseInventoryPlugin):
             for interface in node.interfaces():
                 if interface.discovered_ipv4 and not ansible_host:
                     ansible_host = interface.discovered_ipv4[0]
+                    ansible_host_interface = interface.label
                 interface_dict = {
                     'name': interface.label,
                     'state': interface.state,
@@ -164,6 +150,7 @@ class InventoryModule(BaseInventoryPlugin):
             cml.update({'interfaces': interface_list})
             if ansible_host:
                 self.inventory.set_variable(node.label, 'ansible_host', ansible_host)
+                self.inventory.set_variable(node.label, 'ansible_host_interface', ansible_host_interface)
             self.inventory.set_variable(node.label, 'cml_facts', cml)
             self.display.vvv("Adding {0}({1}) to group {2}, state: {3}, ansible_host: {4}".format(
                 node.label, node.node_definition, self.group, node.state, ansible_host))
@@ -173,4 +160,11 @@ class InventoryModule(BaseInventoryPlugin):
                     group_dict[node.node_definition] = self.inventory.add_group(node.node_definition)
                 except AnsibleError as e:
                     raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
-            self.inventory.add_host(node.label, group=node.node_definition)
+            host_name = self.inventory.add_host(node.label, group=group_dict[node.node_definition])
+            # Add to the groups specified by group_tags
+            if self.group_tags:
+                node_groups = list(set(self.group_tags) & set(node.tags()))
+                for group in node_groups:
+                    group_name = self.inventory.add_group(group)
+                    self.inventory.add_host(host_name, group=group_name)
+                    self.display.vvv("Adding node {0} to group {1}".format(node.label, group))

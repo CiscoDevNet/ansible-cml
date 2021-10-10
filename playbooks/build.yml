@@ -1,0 +1,93 @@
+- name: Build the topology
+  hosts: localhost
+  gather_facts: no
+  tags:
+    - cml
+    - network
+  tasks:
+    - name: Check for the lab file
+      stat:
+        path: "{{ cml_lab_file }}"
+      register: stat_result
+      delegate_to: localhost
+      run_once: yes
+
+    - assert:
+        that:
+          - stat_result.stat.exists
+          - cml_host != ""
+          - cml_username != ""
+          - cml_password != ""
+          - cml_lab != ""
+        msg: "CML host, credentials, and topology file are required.  Verify the requirements in README are met."
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Create the lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: present
+        file: "{{ cml_lab_file }}"
+      register: results
+
+    - name: Refresh Inventory
+      meta: refresh_inventory    
+
+- name: Start unmanaged nodes
+  hosts: external_connector:unmanaged_switch
+  connection: local
+  gather_facts: no
+  tags:
+    - start
+    - network
+  tasks:
+    - name: Start the infrastructure nodes
+      cisco.cml.cml_node:
+        name: "{{ inventory_hostname }}"
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: started
+      delegate_to: localhost
+
+- name: Start the network
+  hosts: cml_hosts:!external_connector:!unmanaged_switch
+  connection: local
+  gather_facts: no
+  tags:
+    - start
+    - network
+  vars:
+    config_dir: "{{ lookup('env', 'HOME') }}/configs"
+    config_file: "{{ config_dir }}/{{ inventory_hostname }}.cfg"
+  tasks:
+    - name: Check to see if config exists
+      stat:
+        path: "{{ config_file }}"
+      register: stat_result
+
+    - name: Generating day0 config
+      set_fact:
+        day0_config: "{{ lookup('template', cml_config_template) }}"
+      when: not stat_result.stat.exists and cml_config_template is defined
+
+    - name: Using existing config
+      set_fact:
+        day0_config: "{{ lookup('template', config_file) }}"
+      when: stat_result.stat.exists
+
+    - name: Start Node
+      cisco.cml.cml_node:
+        name: "{{ inventory_hostname }}"
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: started
+        image_definition: "{{ cml_image_definition | default(omit) }}"
+        config: "{{ day0_config | default(omit) }}"
+      delegate_to: localhost

@@ -9,24 +9,28 @@ notes:
   - This should be run with connection C(local)
 options:
     host:
-        description: FQDN of the target host
-        required: false
-        type: string
-        default: 'env: CML_HOST'
-        env:
-            - name: CML_HOST
+        description: 'FQDN of the target host (env: CML_HOST)'
+        required: true
+        type: str
     username:
-        description: user credential for target system
-        required: false
-        type: string
-        default: 'env: CML_USERNAME'
-        env:
-            - name: CML_USERNAME
+        description: 'User credential for target system (env: CML_USERNAME)'
+        required: true
+        type: str
+        aliases:
+            - user
     password:
-        description: user pass for the target system
+        description: 'User pass for the target system (env: CML_PASSWORD)'
+        required: true
+        type: str
+    timeout:
+        description: Timeout
         required: false
-        type: string
-        default: 'env: CML_PASSWORD'
-        env:
-            - name: CML_PASSWORD
+        type: int
+        default: 30
+    validate_certs:
+        description: Certificate validation
+        required: false
+        default: false
+        type: bool
+        choices: ['yes', 'no']
 '''

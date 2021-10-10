@@ -1,12 +1,22 @@
-from virl2_client import ClientLibrary
-from ansible.module_utils.basic import env_fallback
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+from ansible.module_utils.basic import env_fallback, missing_required_lib
+import traceback
+
+try:
+    from virl2_client import ClientLibrary
+except ImportError:
+    HAS_VIRL2_CLIENT = False
+    VIRL2_CLIENT_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_VIRL2_CLIENT = True
 
 
 def cml_argument_spec():
     return dict(host=dict(type='str', required=True, fallback=(env_fallback, ['CML_HOST'])),
-                user=dict(type='str', required=True, fallback=(env_fallback, ['CML_USERNAME'])),
+                username=dict(type='str', required=True, aliases=['user'], fallback=(env_fallback, ['CML_USERNAME'])),
                 password=dict(type='str', required=True, fallback=(env_fallback, ['CML_PASSWORD'])),
-                validate_certs=dict(type='bool', required=False, default=False),
+                validate_certs=dict(type='bool', required=False, default=False, choices=['yes', 'no']),
                 timeout=dict(type='int', default=30))
 
 
@@ -35,6 +45,12 @@ class cmlModule(object):
         self.client = None
 
         self.login()
+
+        if not HAS_VIRL2_CLIENT:
+            # Needs: from ansible.module_utils.basic import missing_required_lib
+            self.module.fail_json(
+                msg=missing_required_lib('virl2_client'),
+                exception=VIRL2_CLIENT_IMPORT_ERROR)
 
     def login(self):
         self.client = ClientLibrary('https://{0}'.format(self.host), self.user, self.password, ssl_verify=False)
