@@ -55,7 +55,6 @@ options:
         required: false
         default: false
         type: bool
-        choices: ['True', 'False']
 extends_documentation_fragment: cisco.cml.cml
 """
 
@@ -111,7 +110,7 @@ def run_module():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         file=dict(type='str'),
-        wait=dict(type='bool', default=False, choices=['yes', 'no'])
+        wait=dict(type='bool', default=False)
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible

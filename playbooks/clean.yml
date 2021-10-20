@@ -1,0 +1,32 @@
+- hosts: localhost
+  gather_facts: no
+  tags:
+    - always
+  tasks:
+    - name: Stop the lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: stopped
+        timeout: 300
+      tags:
+        - stop
+        - wipe
+    - name: Wipe the lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: wiped
+      tags:
+        - wipe
+    - name: Delete the lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: absent

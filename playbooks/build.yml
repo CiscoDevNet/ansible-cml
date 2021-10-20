@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/ansible-playbook.json
 - name: Build the topology
   hosts: localhost
   gather_facts: no
@@ -62,23 +63,13 @@
     - start
     - network
   vars:
-    config_dir: "{{ lookup('env', 'HOME') }}/configs"
-    config_file: "{{ config_dir }}/{{ inventory_hostname }}.cfg"
+    config_root: "{{ lookup('env', 'PWD') }}/files"
+    cml_config_file: "{{ config_root }}/{{ cml_config }}"
   tasks:
-    - name: Check to see if config exists
-      stat:
-        path: "{{ config_file }}"
-      register: stat_result
-
-    - name: Generating day0 config
+    - name: Read config file
       set_fact:
-        day0_config: "{{ lookup('template', cml_config_template) }}"
-      when: not stat_result.stat.exists and cml_config_template is defined
-
-    - name: Using existing config
-      set_fact:
-        day0_config: "{{ lookup('template', config_file) }}"
-      when: stat_result.stat.exists
+        day0_config: "{{ lookup('template', cml_config ) }}"
+      when: cml_config is defined and cml_config
 
     - name: Start Node
       cisco.cml.cml_node:

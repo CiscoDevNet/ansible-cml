@@ -32,5 +32,4 @@ options:
         required: false
         default: false
         type: bool
-        choices: ['yes', 'no']
 '''
