@@ -8,7 +8,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text
 
 DOCUMENTATION = r'''
-    name: cml
+    name: cisco.cml.cml_inventory
     plugin_type: inventory
     short_description: Returns Inventory from the CML server
     description:
@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
         plugin:
             description: Name of the plugin
             required: true
-            choices: ['cml']
+            choices: ['cisco.cml.cml_inventory']
         host:
             description: FQDN of the target host
             required: false
@@ -60,7 +60,7 @@ class InventoryModule(BaseInventoryPlugin):
             endings = ('cml.yaml', 'cml.yml')
             if any((path.endswith(ending) for ending in endings)):
                 return True
-        display.debug("cml inventory filename must end with 'cml.yml' or 'cml.yaml'")
+        self.display.debug("cml inventory filename must end with 'cml.yml' or 'cml.yaml'")
         return False
 
     def parse(self, inventory, loader, path, cache=True):
