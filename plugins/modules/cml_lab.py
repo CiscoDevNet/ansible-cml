@@ -37,6 +37,7 @@ options:
         description: Wait for lab virtual machines to boot before continuing
         required: false
         type: boolean
+        default: True
         choices: ['True', 'False']
     validate_certs:
         description: certificate validation
@@ -94,7 +95,7 @@ def run_module():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         file=dict(type='str'),
-        wait=dict(type='bool', default=False)
+        wait=dict(type='bool', default=True)
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -106,6 +107,7 @@ def run_module():
         supports_check_mode=True,
     )
     cml = cmlModule(module)
+    cml.result['changed'] = False
     labs = cml.client.find_labs_by_title(cml.params['lab'])
     if len(labs) > 0:
         lab = labs[0]
@@ -133,18 +135,20 @@ def run_module():
     elif cml.params['state'] == 'absent':
         if lab:
             cml.result['changed'] = True
-            if lab.state == "STARTED":
+            if lab.state() == "STARTED":
                 lab.stop(wait=True)
                 lab.wipe(wait=True)
-            elif lab.state == "STOPPED":
+            elif lab.state() == "STOPPED":
                 lab.wipe(wait=True)
             lab.remove()
     elif cml.params['state'] == 'stopped':
         if lab:
+          if lab.state() == "STARTED":
             cml.result['changed'] = True
             lab.stop(wait=True)
     elif cml.params['state'] == 'wiped':
         if lab:
+          if lab.state() == "STOPPED":
             cml.result['changed'] = True
             lab.wipe(wait=True)
 
