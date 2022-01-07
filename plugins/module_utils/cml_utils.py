@@ -5,7 +5,7 @@ from ansible.module_utils.basic import env_fallback
 def cml_argument_spec():
     return dict(host=dict(type='str', required=True, fallback=(env_fallback, ['CML_HOST'])),
                 user=dict(type='str', required=True, fallback=(env_fallback, ['CML_USERNAME'])),
-                password=dict(type='str', required=True, fallback=(env_fallback, ['CML_PASSWORD'])),
+                password=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['CML_PASSWORD'])),
                 validate_certs=dict(type='bool', required=False, default=False),
                 timeout=dict(type='int', default=30))
 
