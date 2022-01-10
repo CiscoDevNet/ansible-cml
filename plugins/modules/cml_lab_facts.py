@@ -1,7 +1,27 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
@@ -24,10 +44,6 @@ options:
         default: 'env: CML_LAB'
         env:
             - name: CML_LAB
-    validate_certs:
-        description: certificate validation
-        required: false
-        choices: ['yes', 'no']
 extends_documentation_fragment: cisco.cml.cml
 """
 EXAMPLES = r"""
@@ -47,6 +63,10 @@ EXAMPLES = r"""
     - debug:
         var: results
 """
+
+import traceback
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 
 
 def run_module():
@@ -86,19 +106,36 @@ def run_module():
             }
             ansible_host = None
             for interface in node.interfaces():
-                if interface.discovered_ipv4 and not ansible_host:
-                    ansible_host = interface.discovered_ipv4[0]
-                cml_facts['nodes'][node.label]['interfaces'][interface.label] = {
-                    'state': interface.state,
-                    'ipv4_addresses': interface.discovered_ipv4,
-                    'ipv6_addresses': interface.discovered_ipv6,
-                    'mac_address': interface.discovered_mac_address,
-                    'is_physical': interface.is_physical,
-                    'readbytes': interface.readbytes,
-                    'readpackets': interface.readpackets,
-                    'writebytes': interface.writebytes,
-                    'writepackets': interface.writepackets                    
-                }
+                if node.state == 'BOOTED':
+                    # Fill out the oper data if the node is not fully booted
+                    interface_data = {
+                        'state': interface.state,
+                        'ipv4_addresses': interface.discovered_ipv4,
+                        'ipv6_addresses': interface.discovered_ipv6,
+                        'mac_address': interface.discovered_mac_address,
+                        'is_physical': interface.is_physical,
+                        'readbytes': interface.readbytes,
+                        'readpackets': interface.readpackets,
+                        'writebytes': interface.writebytes,
+                        'writepackets': interface.writepackets
+                    }
+                    # See if we can use this for ansible_host
+                    if interface.discovered_ipv4 and not ansible_host:
+                        ansible_host = interface.discovered_ipv4[0]
+                else:
+                    # Otherwise, set oper data to empty
+                    interface_data = {
+                        'state': interface.state,
+                        'ipv4_addresses': [],
+                        'ipv6_addresses': [],
+                        'mac_address': None,
+                        'is_physical': interface.is_physical,
+                        'readbytes': interface.readbytes,
+                        'readpackets': interface.readpackets,
+                        'writebytes': interface.writebytes,
+                        'writepackets': interface.writepackets
+                    }
+                cml_facts['nodes'][node.label]['interfaces'][interface.label] = interface_data
             cml_facts['nodes'][node.label]['ansible_host'] = ansible_host
     cml.result['cml_facts'] = cml_facts
     cml.exit_json(**cml.result)

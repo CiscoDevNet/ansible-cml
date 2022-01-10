@@ -1,11 +1,6 @@
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
-import os
-from virl2_client import ClientLibrary
-from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.module_utils._text import to_text
+__metaclass__ = type
 
 DOCUMENTATION = r'''
     name: cisco.cml.cml_inventory
@@ -38,6 +33,20 @@ DOCUMENTATION = r'''
             required: false
             choices: ['yes', 'no']
 '''
+
+import os
+import traceback
+from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils._text import to_text
+
+try:
+    from virl2_client import ClientLibrary
+except ImportError:
+    HAS_VIRL2CLIENT = False
+    VIRL2CLIENT_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_VIRL2CLIENT = True
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -120,10 +129,7 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.set_variable('all', 'cml_lab', self.lab)
 
         url = 'https://{0}'.format(self.host)
-        try:
-            client = ClientLibrary(url, username=self.username, password=self.password, ssl_verify=False)
-        except:
-            raise AnsibleParserError('Unable to log into {0}'.format(url))
+        client = ClientLibrary(url, username=self.username, password=self.password, ssl_verify=False)
 
         labs = (client.find_labs_by_title(self.lab))
         if not labs:
@@ -151,15 +157,27 @@ class InventoryModule(BaseInventoryPlugin):
             interface_list = []
             ansible_host = None
             for interface in node.interfaces():
-                if interface.discovered_ipv4 and not ansible_host:
-                    ansible_host = interface.discovered_ipv4[0]
-                interface_dict = {
-                    'name': interface.label,
-                    'state': interface.state,
-                    'ipv4_addresses': interface.discovered_ipv4,
-                    'ipv6_addresses': interface.discovered_ipv6,
-                    'mac_address': interface.discovered_mac_address
-                }
+                if node.state == 'BOOTED':
+                    # Fill out the oper data if the node is not fully booted
+                    interface_dict = {
+                        'name': interface.label,
+                        'state': interface.state,
+                        'ipv4_addresses': interface.discovered_ipv4,
+                        'ipv6_addresses': interface.discovered_ipv6,
+                        'mac_address': interface.discovered_mac_address
+                    }
+                    # See if we can use this for ansible_host
+                    if interface.discovered_ipv4 and not ansible_host:
+                        ansible_host = interface.discovered_ipv4[0]
+                else:
+                    # Otherwise, set oper data to empty
+                    interface_dict = {
+                        'name': interface.label,
+                        'state': interface.state,
+                        'ipv4_addresses': [],
+                        'ipv6_addresses': [],
+                        'mac_address': None
+                    }
                 interface_list.append(interface_dict)
             cml.update({'interfaces': interface_list})
             if ansible_host:
