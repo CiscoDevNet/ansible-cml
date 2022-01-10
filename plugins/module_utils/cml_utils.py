@@ -1,5 +1,16 @@
-from virl2_client import ClientLibrary
-from ansible.module_utils.basic import env_fallback
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
+import traceback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
+
+try:
+    from virl2_client import ClientLibrary
+except ImportError:
+    HAS_VIRL2CLIENT = False
+    VIRL2CLIENT_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_VIRL2CLIENT = True
 
 
 def cml_argument_spec():
@@ -11,6 +22,7 @@ def cml_argument_spec():
 
 
 class cmlModule(object):
+
     def __init__(self, module, function=None):
         self.module = module
         self.params = module.params
@@ -33,6 +45,9 @@ class cmlModule(object):
         self.modifiable_methods = ['POST', 'PUT', 'DELETE']
 
         self.client = None
+
+        if not HAS_VIRL2CLIENT:
+            module.fail_json(msg=missing_required_lib('vlirl2_client'), exception=VIRL2CLIENT_IMPORT_ERROR)
 
         self.login()
 

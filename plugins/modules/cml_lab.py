@@ -1,7 +1,27 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
@@ -12,18 +32,15 @@ short_description: Create, update or delete a CML Lab
 description:
   - Create, update or delete a CML Lab
 author:
-  - Steven Carter
+  - Steven Carter (@stevenca)
 requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
     lab:
-        description: The name of the CML lab
+        description: The name of the CML lab (env: CML_LAB)
         required: false
         type: string
-        default: 'env: CML_LAB'
-        env:
-            - name: CML_LAB
     file:
         description: The name of group in which to put nodes
         required: false
@@ -37,12 +54,8 @@ options:
         description: Wait for lab virtual machines to boot before continuing
         required: false
         type: boolean
+        default: True
         choices: ['True', 'False']
-    validate_certs:
-        description: certificate validation
-        required: false
-        type: boolean
-        choices: ['yes', 'no']
 extends_documentation_fragment: cisco.cml.cml
 """
 
@@ -86,16 +99,21 @@ EXAMPLES = r"""
       meta: refresh_inventory
 """
 
+import traceback
+import os
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
-    argument_spec.update(
-        state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
-        lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
-        file=dict(type='str'),
-        wait=dict(type='bool', default=False)
-    )
+    argument_spec.update(state=dict(type='str',
+                                    choices=['absent', 'present', 'started', 'stopped', 'wiped'],
+                                    default='present'),
+                         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
+                         file=dict(type='str'),
+                         wait=dict(type='bool', default=True))
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
@@ -106,6 +124,7 @@ def run_module():
         supports_check_mode=True,
     )
     cml = cmlModule(module)
+    cml.result['changed'] = False
     labs = cml.client.find_labs_by_title(cml.params['lab'])
     if len(labs) > 0:
         lab = labs[0]
@@ -115,7 +134,11 @@ def run_module():
     if cml.params['state'] == 'present':
         if lab is None:
             if cml.params['file']:
-                lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
+                if os.path.isabs(cml.params['file']):
+                  topology_file = cml.params['file']
+                else:
+                  topology_file = os.getcwd() + '/' + cml.params['file']
+                lab = cml.client.import_lab_from_path(topology_file, title=cml.params['lab'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])
             lab.title = cml.params['lab']
@@ -133,20 +156,22 @@ def run_module():
     elif cml.params['state'] == 'absent':
         if lab:
             cml.result['changed'] = True
-            if lab.state == "STARTED":
+            if lab.state() == "STARTED":
                 lab.stop(wait=True)
                 lab.wipe(wait=True)
-            elif lab.state == "STOPPED":
+            elif lab.state() == "STOPPED":
                 lab.wipe(wait=True)
             lab.remove()
     elif cml.params['state'] == 'stopped':
         if lab:
-            cml.result['changed'] = True
-            lab.stop(wait=True)
+            if lab.state() == "STARTED":
+                cml.result['changed'] = True
+                lab.stop(wait=True)
     elif cml.params['state'] == 'wiped':
         if lab:
-            cml.result['changed'] = True
-            lab.wipe(wait=True)
+            if lab.state() == "STOPPED":
+                cml.result['changed'] = True
+                lab.wipe(wait=True)
 
     cml.exit_json(**cml.result)
 
