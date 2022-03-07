@@ -42,7 +42,11 @@ options:
         required: false
         type: string
     file:
-        description: The name of group in which to put nodes
+        description: The name of the topology file to use.
+        required: false
+        type: string
+    topology:
+        description: The lab topology.
         required: false
         type: string
     state:
@@ -113,6 +117,7 @@ def run_module():
                                     default='present'),
                          lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
                          file=dict(type='str'),
+                         topology=dict(type='str'),
                          wait=dict(type='bool', default=True))
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -133,7 +138,9 @@ def run_module():
 
     if cml.params['state'] == 'present':
         if lab is None:
-            if cml.params['file']:
+            if cml.params['topology']:
+              lab = cml.client.import_lab(cml.params['topology'], title=cml.params['lab'])
+            elif cml.params['file']:
                 if os.path.isabs(cml.params['file']):
                   topology_file = cml.params['file']
                 else:
@@ -145,7 +152,10 @@ def run_module():
             cml.result['changed'] = True
     elif cml.params['state'] == 'started':
         if lab is None:
-            if cml.params['file']:
+            if cml.params['topology']:
+              lab = cml.client.import_lab(cml.params['topology'], title=cml.params['lab'])
+              lab.start(wait=cml.params['wait'])
+            elif cml.params['file']:
                 lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
                 lab.start(wait=cml.params['wait'])
             else:
