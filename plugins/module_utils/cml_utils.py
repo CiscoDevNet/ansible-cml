@@ -15,7 +15,7 @@ else:
 
 def cml_argument_spec():
     return dict(host=dict(type='str', required=True, fallback=(env_fallback, ['CML_HOST'])),
-                user=dict(type='str', required=True, fallback=(env_fallback, ['CML_USERNAME'])),
+                username=dict(type='str', required=True, aliases=['user'], fallback=(env_fallback, ['CML_USERNAME'])),
                 password=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['CML_PASSWORD'])),
                 validate_certs=dict(type='bool', required=False, default=False),
                 timeout=dict(type='int', default=30))
@@ -47,7 +47,7 @@ class cmlModule(object):
         self.client = None
 
         if not HAS_VIRL2CLIENT:
-            module.fail_json(msg=missing_required_lib('vlirl2_client'), exception=VIRL2CLIENT_IMPORT_ERROR)
+            module.fail_json(msg=missing_required_lib('virl2_client'), exception=VIRL2CLIENT_IMPORT_ERROR)
 
         self.login()
 

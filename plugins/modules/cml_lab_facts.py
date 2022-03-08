@@ -32,18 +32,10 @@ short_description: Get facts about a CML Lab
 description:
   - Get facts about a CML Lab
 author:
-  - Steven Carter
+  - Steven Carter (@stevenca)
 requirements:
   - virl2_client
 version_added: '0.1.0'
-options:
-    lab:
-        description: The name of the CML lab
-        required: false
-        type: string
-        default: 'env: CML_LAB'
-        env:
-            - name: CML_LAB
 extends_documentation_fragment: cisco.cml.cml
 """
 EXAMPLES = r"""
