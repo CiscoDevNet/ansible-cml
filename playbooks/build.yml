@@ -58,7 +58,6 @@
           path: "{{ cml_config_file }}"
         register: stat_result
         delegate_to: localhost
-        run_once: yes
 
       - name: Read in cml_config_file
         set_fact:
