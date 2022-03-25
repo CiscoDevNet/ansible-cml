@@ -64,6 +64,33 @@ ok: [hq-host1] => {
 }
 ```
 
+## Collection Playbooks
+
+### `cisco.cml.build`
+
+* Build a topology
+
+extra_vars:
+  * `startup`: Either `all` to start up all devices at one or `host` to startup devices individually (default: `all`)
+  * `wait`: Whether to wait for the task to complete before returning (default: `no`)
+
+notes:
+  * `cml_lab_file` lab file must be defined and will be read in as a J2 template.
+  * When `cml_config_file` is specified per host and `-e startup='host'` is specified, the file is read in as a J2 template and fed into the device at startup.
+
+### `cisco.cml.clean`
+
+* Clean a topology
+
+tags:
+  * `stop`: Just stop the topology
+  * `wipe`: Stop and wipe the topology
+  * `erase`: Stop, wipe, and erase the topology
+
+### `cisco.cml.inventory`
+
+* Show topology Inventory
+
 ## Example Playbooks
 
 ### Create a Lab

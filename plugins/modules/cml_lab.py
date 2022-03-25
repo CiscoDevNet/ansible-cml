@@ -20,10 +20,11 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'], 'supported_by': 'community'}
 
 DOCUMENTATION = r"""
 ---
@@ -37,25 +38,25 @@ requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
-    lab:
-        description: The name of the CML lab (env: CML_LAB)
-        required: false
-        type: string
     file:
-        description: The name of group in which to put nodes
+        description: The name of the topology file to use.
         required: false
-        type: string
+        type: str
+    topology:
+        description: The lab topology.
+        required: false
+        type: str
     state:
         description: The desired state of the lab
         required: false
+        type: str
         choices: ['absent', 'present', 'started', 'stopped', 'wiped']
         default: present
     wait:
         description: Wait for lab virtual machines to boot before continuing
         required: false
-        type: boolean
+        type: bool
         default: True
-        choices: ['True', 'False']
 extends_documentation_fragment: cisco.cml.cml
 """
 
@@ -99,20 +100,23 @@ EXAMPLES = r"""
       meta: refresh_inventory
 """
 
-import traceback
-import os
-from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+from ansible.module_utils.basic import AnsibleModule, env_fallback
+import os
+import traceback
 
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
     argument_spec.update(state=dict(type='str',
-                                    choices=['absent', 'present', 'started', 'stopped', 'wiped'],
+                                    choices=['absent', 'present',
+                                             'started', 'stopped', 'wiped'],
                                     default='present'),
-                         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
+                         lab=dict(type='str', required=True,
+                                  fallback=(env_fallback, ['CML_LAB'])),
                          file=dict(type='str'),
+                         topology=dict(type='str'),
                          wait=dict(type='bool', default=True))
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -133,20 +137,29 @@ def run_module():
 
     if cml.params['state'] == 'present':
         if lab is None:
-            if cml.params['file']:
+            if cml.params['topology']:
+                lab = cml.client.import_lab(
+                    cml.params['topology'], title=cml.params['lab'])
+            elif cml.params['file']:
                 if os.path.isabs(cml.params['file']):
-                  topology_file = cml.params['file']
+                    topology_file = cml.params['file']
                 else:
-                  topology_file = os.getcwd() + '/' + cml.params['file']
-                lab = cml.client.import_lab_from_path(topology_file, title=cml.params['lab'])
+                    topology_file = os.getcwd() + '/' + cml.params['file']
+                lab = cml.client.import_lab_from_path(
+                    topology_file, title=cml.params['lab'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])
             lab.title = cml.params['lab']
             cml.result['changed'] = True
     elif cml.params['state'] == 'started':
         if lab is None:
-            if cml.params['file']:
-                lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
+            if cml.params['topology']:
+                lab = cml.client.import_lab(
+                    cml.params['topology'], title=cml.params['lab'])
+                lab.start(wait=cml.params['wait'])
+            elif cml.params['file']:
+                lab = cml.client.import_lab_from_path(
+                    cml.params['file'], title=cml.params['lab'])
                 lab.start(wait=cml.params['wait'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])

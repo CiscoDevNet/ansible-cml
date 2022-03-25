@@ -32,87 +32,59 @@ short_description: Create, update or delete a node in a CML Lab
 description:
   - Create, update or delete a node in a CML Lab
 author:
-  - Steven Carter
+  - Steven Carter (@stevenca)
 requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
-    lab:
-        description: The name of the CML lab
-        required: false
-        type: string
-        default: 'env: CML_LAB'
-        env:
-            - name: CML_LAB
-    file:
-        description: The name of group in which to put nodes
-        required: false
-        type: string
     state:
         description: The desired state of the node
         required: false
+        type: str
         choices: ['absent', 'present', 'started', 'stopped', 'wiped']
         default: present
 
     name:
         description: The name of the node
         required: true
-        type: string
+        type: str
 
     node_definition:
         description: The node definition of this node
         required: false
-        type: string
+        type: str
 
     image_definition:
         description: The image definition of this node
         required: false
-        type: string
+        type: str
 
     config:
         description: The day0 configuration of this node
         required: false
-        type: string
+        type: str
 
     x:
         description: X coordinate on topology canvas
         required: false
-        type: integer
+        type: int
 
     y:
         description: Y coordinate on topology canvas
         required: false
-        type: integer
-
-    ram:
-        description: memory of node in MiB (if applicable)
-        required: false
-        type: integer
-
-    cpus:
-        description: Amount of CPUs in this node (if applicable)
-        required: false
-        type: integer
-
-    cpu_limit:
-        description: CPU limit (default at 100%)
-        required: false
-        type: integer
-
-    data_volume:
-        description: Size in GiB of 2nd HDD (if > 0)
-        required: false
-        type: integer
-
-    boot_disk_size:
-        description: Size in GiB of boot disk (will expand to this size)
-        required: false
-        type: integer
+        type: int
 
     tags:
         description: List of tags
         required: false
         type: list
+        elements: str
+
+    wait:
+        description: Wait for lab virtual machines to boot before continuing
+        required: false
+        type: bool
+        default: False
 extends_documentation_fragment: cisco.cml.cml
 """
 
@@ -151,12 +123,10 @@ def run_module():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped', 'wiped'], default='present'),
         name=dict(type='str', required=True),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
-        lab_id=dict(type='str'),
-        node_id=dict(type='str'),
         node_definition=dict(type='str'),
         image_definition=dict(type='str'),
         config=dict(type='str'),
-        tags=dict(type='list'),
+        tags=dict(type='list', elements='str'),
         x=dict(type='int'),
         y=dict(type='int'),
         wait=dict(type='bool', default=False),

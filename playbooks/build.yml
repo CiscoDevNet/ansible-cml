@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://json.schemastore.org/ansible-playbook.json
+- name: Build the topology
+  hosts: localhost
+  gather_facts: no
+  vars:
+    startup: 'all'  # Specify 'host' for per host startup
+    wait: 'no'
+  tags:
+    - cml
+    - network
+  tasks:
+    - name: Check for the lab file
+      stat:
+        path: "{{ cml_lab_file }}"
+      register: stat_result
+      delegate_to: localhost
+      run_once: yes
+
+    - assert:
+        that:
+          - stat_result.stat.exists
+          - cml_host != ""
+          - cml_username != ""
+          - cml_password != ""
+          - cml_lab != ""
+          - cml_lab_file != ""
+        msg: "CML host, credentials, and topology file are required.  Verify the requirements in README are met."
+      delegate_to: localhost
+      run_once: yes
+
+    - name: Create the lab
+      cisco.cml.cml_lab:
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        lab: "{{ cml_lab }}"
+        state: "{{ 'started' if startup == 'all' else 'present' }}"
+        topology: "{{ lookup('template', cml_lab_file) }}"
+        wait: "{{ wait if startup == 'all' else 'yes' }}"
+      register: results
+
+    - name: Refresh Inventory
+      meta: refresh_inventory
+
+- name: Start Individual Nodes
+  hosts: cml_hosts
+  connection: local
+  gather_facts: no
+  vars:
+    startup: 'all'
+  tags:
+    - start
+    - network
+  tasks:
+    - block:
+      - name: Check for the cml_config_file
+        stat:
+          path: "{{ cml_config_file }}"
+        register: stat_result
+        delegate_to: localhost
+
+      - name: Read in cml_config_file
+        set_fact:
+          cml_config_content: "{{ lookup('template', cml_config_file) | default('') }}"
+        when: stat_result.stat.exists
+      when: cml_config_file is defined and cml_config_file
+
+    - name: Start Individual Nodes
+      cisco.cml.cml_node:
+        name: "{{ inventory_hostname }}"
+        host: "{{ cml_host }}"
+        user: "{{ cml_username }}"
+        password: "{{ cml_password }}"
+        config: "{{ cml_config_content | default(omit, true) }}"
+        lab: "{{ cml_lab }}"
+        state: started
+      when: startup == 'host'
+      delegate_to: localhost
