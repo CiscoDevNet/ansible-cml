@@ -1,1 +1,1 @@
-virl2-client==2.1.0
+virl2-client==2.4.0
