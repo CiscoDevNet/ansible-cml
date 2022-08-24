@@ -98,7 +98,7 @@ EXAMPLES = r"""
 """
 
 import traceback
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 
 try:
