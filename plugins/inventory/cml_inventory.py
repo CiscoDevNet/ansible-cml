@@ -129,6 +129,7 @@ class InventoryModule(BaseInventoryPlugin):
             self.group = 'cml_hosts'
 
         self.display.vvv("cml.py - Group: {0}".format(self.group))
+        self.inventory.set_variable('all', 'cml_group', self.group)
 
         self.inventory.set_variable('all', 'cml_host', self.host)
         self.inventory.set_variable('all', 'cml_username', self.username)
