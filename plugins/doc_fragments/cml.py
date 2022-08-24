@@ -23,10 +23,6 @@ options:
         description: user pass for the target system (CML_PASSWORD)
         required: true
         type: str
-    lab:
-        description: The name of the CML lab (CML_LAB)
-        required: true
-        type: str
     timeout:
         description: API Timeout
         required: false
