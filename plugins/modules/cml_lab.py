@@ -38,6 +38,10 @@ requirements:
   - virl2_client
 version_added: '0.1.0'
 options:
+    lab:
+        description: The name of the CML lab (CML_LAB)
+        required: true
+        type: str
     file:
         description: The name of the topology file to use.
         required: false
