@@ -21,8 +21,6 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import requests
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
@@ -100,8 +98,17 @@ EXAMPLES = r"""
 """
 
 import traceback
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
+
+try:
+    import requests
+except ImportError:
+    HAS_REQUESTS = False
+    REQUESTS_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_REQUESTS = True
+
 
 def get_userid(cml):
     try:
@@ -112,6 +119,7 @@ def get_userid(cml):
             return None
         else:
             cml.fail_json(name=cml.params['name'], msg=e, rc=-1)
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -138,6 +146,10 @@ def run_module():
     cml.result['name'] = cml.params['name']
     cml.result['state'] = cml.params['state']
     userid = get_userid(cml)
+
+    if not HAS_REQUESTS:
+        # Needs: from ansible.module_utils.basic import missing_required_lib
+        module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMPORT_ERROR)
 
     if cml.params['state'] == 'present':
         if userid is None:

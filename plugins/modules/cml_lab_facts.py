@@ -36,6 +36,11 @@ author:
 requirements:
   - virl2_client
 version_added: '0.1.0'
+options:
+    lab:
+        description: The name of the CML lab (CML_LAB)
+        required: true
+        type: str
 extends_documentation_fragment: cisco.cml.cml
 """
 EXAMPLES = r"""

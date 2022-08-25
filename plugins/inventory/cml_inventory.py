@@ -28,6 +28,10 @@ DOCUMENTATION = r'''
         group:
             description: The name of group in which to put nodes
             required: false
+        group_tags:
+            description: The list of tags for which to make and populate groups
+            type: list
+            required: false
         validate_certs:
             description: certificate validation
             required: false
@@ -117,11 +121,15 @@ class InventoryModule(BaseInventoryPlugin):
             self.display.vvv("No lab defined.  Nothing to do.")
             return
 
+        self.group_tags = self.get_option('group_tags')
+        if self.group_tags:
+            self.display.vvv("cml.py - group_tags: {0}".format(','.join(self.group_tags)))
         self.group = self.get_option('group')
         if self.group is None:
             self.group = 'cml_hosts'
 
         self.display.vvv("cml.py - Group: {0}".format(self.group))
+        self.inventory.set_variable('all', 'cml_group', self.group)
 
         self.inventory.set_variable('all', 'cml_host', self.host)
         self.inventory.set_variable('all', 'cml_username', self.username)
@@ -192,3 +200,13 @@ class InventoryModule(BaseInventoryPlugin):
                 except AnsibleError as e:
                     raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
             self.inventory.add_host(node.label, group=node.node_definition)
+            # Find the group to create and add this host to
+            if self.group_tags:
+                for group in list(set(self.group_tags) & set(node.tags())):
+                    if group not in group_dict:
+                        try:
+                            group_dict[group] = self.inventory.add_group(group)
+                        except AnsibleError as e:
+                            raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
+                    self.inventory.add_host(node.label, group=group)
+                    self.display.vvv("Adding {0} to group {1}".format(node.label, group))

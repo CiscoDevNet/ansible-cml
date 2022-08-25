@@ -43,7 +43,10 @@ options:
         type: str
         choices: ['absent', 'present', 'started', 'stopped', 'wiped']
         default: present
-
+    lab:
+        description: The name of the CML lab (CML_LAB)
+        required: true
+        type: str
     name:
         description: The name of the node
         required: true
