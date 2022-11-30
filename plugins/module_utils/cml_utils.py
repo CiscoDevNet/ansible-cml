@@ -4,6 +4,7 @@ __metaclass__ = type
 import traceback
 from ansible.module_utils.basic import env_fallback, missing_required_lib
 
+VIRL2CLIENT_IMPORT_ERROR = None
 try:
     from virl2_client import ClientLibrary
 except ImportError:

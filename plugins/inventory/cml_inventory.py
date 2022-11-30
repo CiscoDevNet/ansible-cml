@@ -163,6 +163,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not labs:
             return
 
+        group = "None"
         try:
             group = self.inventory.add_group(self.group)
         except AnsibleError as e:
