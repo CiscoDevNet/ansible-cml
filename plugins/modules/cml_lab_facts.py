@@ -102,6 +102,7 @@ def run_module():
                 'interfaces': {}
             }
             ansible_host = None
+            ansible_host_interface = None
             for interface in node.interfaces():
                 if node.state == 'BOOTED':
                     # Fill out the oper data if the node is not fully booted
@@ -119,6 +120,7 @@ def run_module():
                     # See if we can use this for ansible_host
                     if interface.discovered_ipv4 and not ansible_host:
                         ansible_host = interface.discovered_ipv4[0]
+                        ansible_host_interface = interface.label
                 else:
                     # Otherwise, set oper data to empty
                     interface_data = {
@@ -134,6 +136,7 @@ def run_module():
                     }
                 cml_facts['nodes'][node.label]['interfaces'][interface.label] = interface_data
             cml_facts['nodes'][node.label]['ansible_host'] = ansible_host
+            cml_facts['nodes'][node.label]['ansible_host_interface'] = ansible_host_interface
     cml.result['cml_facts'] = cml_facts
     cml.exit_json(**cml.result)
 
