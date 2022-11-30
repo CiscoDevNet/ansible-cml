@@ -1,7 +1,7 @@
 # Makefile
 COLLECTION_NAME="cisco.cml"
 COLLECTION_VERSION := $(shell awk '/^version:/{print $$NF}' galaxy.yml)
-TARBALL_NAME=ciscops-mdd-${COLLECTION_VERSION}.tar.gz
+TARBALL_NAME=cisco-cml-${COLLECTION_VERSION}.tar.gz
 PYDIRS="plugins"
 
 help: ## Display help
@@ -23,10 +23,15 @@ publish: $(TARBALL_NAME) ## Publish Collection
 format: ## Format Python code
 	yapf --style=yapf.ini -i -r *.py $(PYDIRS)
 
-test: ## Run Sanity Tests
-	ansible-test sanity --docker default -v
+test: $(TARBALL_NAME) ## Run Sanity Tests
+	$(RM) -r ./ansible_collections
+	ansible-galaxy collection install --force $(TARBALL_NAME) -p ./ansible_collections
+	cd ./ansible_collections/cisco/cml && git init .
+	cd ./ansible_collections/cisco/cml && ansible-test sanity --docker default -v --color
+	$(RM) -r ./ansible_collections
 
 clean: ## Clean
 	$(RM) $(TARBALL_NAME)
+	$(RM) -r ./ansible_collections
 
-.PHONY: all clean test build publish
+.PHONY: all clean build test publish
