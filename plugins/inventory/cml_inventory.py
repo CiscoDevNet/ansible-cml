@@ -1,10 +1,29 @@
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
 DOCUMENTATION = r'''
-    name: cisco.cml.cml_inventory
-    plugin_type: inventory
+    name: cml_inventory
     short_description: Returns Inventory from the CML server
     description:
         - Retrieves inventory from the CML server
@@ -31,6 +50,7 @@ DOCUMENTATION = r'''
         group_tags:
             description: The list of tags for which to make and populate groups
             type: list
+            elements: string
             required: false
         validate_certs:
             description: certificate validation
@@ -143,6 +163,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not labs:
             return
 
+        group = "None"
         try:
             group = self.inventory.add_group(self.group)
         except AnsibleError as e:

@@ -47,6 +47,7 @@ options:
         description:
             - Full Name of the user to create, remove or modify.
         type: str
+        default: ""
     user_pass:
         description:
             - Desired password.
@@ -67,10 +68,12 @@ options:
             - List of groups user will be added to.
         type: list
         elements: str
+        default: []
     description:
         description:
             - Optionally sets the description of user account.
         type: str
+        default: ""
 """
 EXAMPLES = r"""
 - name: Manage users
@@ -101,6 +104,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 
+REQUESTS_IMPORT_ERROR = None
 try:
     import requests
 except ImportError:

@@ -72,3 +72,4 @@ build_ignore:
 - '.env'
 - '.github'
 - 'tests/output/'
+- 'ansible_collections/'

@@ -129,3 +129,20 @@ tags:
 ## License
 
 GPLv3
+
+## Development
+### Running sanity tests locally
+Clean existing build:
+```
+make clean
+```
+
+Build the collection:
+```
+make build
+```
+
+Test the collection:
+```
+make test
+```
