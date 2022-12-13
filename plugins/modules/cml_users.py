@@ -128,14 +128,15 @@ def get_userid(cml):
 def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
-    argument_spec.update(name=dict(type='str', required=True),
-                         fullname=dict(type='str', default=""),
-                         user_pass=dict(type='str', no_log=True),
-                         state=dict(type='str', default='present', choices=['absent', 'present']),
-                         admin=dict(type='bool', default=False),
-                         groups=dict(type='list', elements='str', default=[]),
-                         description=dict(type='str', default=""),
-                         )
+    argument_spec.update(
+        name=dict(type='str', required=True),
+        fullname=dict(type='str', default=""),
+        user_pass=dict(type='str', no_log=True),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        admin=dict(type='bool', default=False),
+        groups=dict(type='list', elements='str', default=[]),
+        description=dict(type='str', default=""),
+    )
 
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the

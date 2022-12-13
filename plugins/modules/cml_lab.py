@@ -20,11 +20,10 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'], 'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
 DOCUMENTATION = r"""
 ---
@@ -114,11 +113,9 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
     argument_spec.update(state=dict(type='str',
-                                    choices=['absent', 'present',
-                                             'started', 'stopped', 'wiped'],
+                                    choices=['absent', 'present', 'started', 'stopped', 'wiped'],
                                     default='present'),
-                         lab=dict(type='str', required=True,
-                                  fallback=(env_fallback, ['CML_LAB'])),
+                         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
                          file=dict(type='str'),
                          topology=dict(type='str'),
                          wait=dict(type='bool', default=True))
@@ -142,15 +139,13 @@ def run_module():
     if cml.params['state'] == 'present':
         if lab is None:
             if cml.params['topology']:
-                lab = cml.client.import_lab(
-                    cml.params['topology'], title=cml.params['lab'])
+                lab = cml.client.import_lab(cml.params['topology'], title=cml.params['lab'])
             elif cml.params['file']:
                 if os.path.isabs(cml.params['file']):
                     topology_file = cml.params['file']
                 else:
                     topology_file = os.getcwd() + '/' + cml.params['file']
-                lab = cml.client.import_lab_from_path(
-                    topology_file, title=cml.params['lab'])
+                lab = cml.client.import_lab_from_path(topology_file, title=cml.params['lab'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])
             lab.title = cml.params['lab']
@@ -158,12 +153,10 @@ def run_module():
     elif cml.params['state'] == 'started':
         if lab is None:
             if cml.params['topology']:
-                lab = cml.client.import_lab(
-                    cml.params['topology'], title=cml.params['lab'])
+                lab = cml.client.import_lab(cml.params['topology'], title=cml.params['lab'])
                 lab.start(wait=cml.params['wait'])
             elif cml.params['file']:
-                lab = cml.client.import_lab_from_path(
-                    cml.params['file'], title=cml.params['lab'])
+                lab = cml.client.import_lab_from_path(cml.params['file'], title=cml.params['lab'])
                 lab.start(wait=cml.params['wait'])
             else:
                 lab = cml.client.create_lab(title=cml.params['lab'])
