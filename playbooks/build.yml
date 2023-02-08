@@ -89,6 +89,7 @@
   vars:
     startup: 'all'  # Specify 'host' for per host startup
     wait: 'no'
+    retries: 40
   tasks:
     - name: Check to see if all hosts are BOOTED
       cisco.cml.cml_lab_facts:
@@ -98,7 +99,7 @@
         lab: "{{ cml_lab }}"
       register: cml_lab_facts
       until: (states | length == 1) and (states[0] == 'BOOTED')
-      retries: 40
+      retries: "{{ retries }}"
       delay: 15
       vars:
         states: "{{ cml_lab_facts.cml_facts.nodes | default({}) | dict2items | selectattr('value.state','defined') | map(attribute='value.state') | unique | list }}"
