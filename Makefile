@@ -1,5 +1,5 @@
 # Makefile
-PYTHON_EXE = python3
+PYTHON_EXE = python3.10
 COLLECTION_NAME="cisco.cml"
 COLLECTION_VERSION := $(shell awk '/^version:/{print $$NF}' galaxy.yml)
 TARBALL_NAME=cisco-cml-${COLLECTION_VERSION}.tar.gz
@@ -40,10 +40,10 @@ test: $(VENV) $(TARBALL_NAME) ## Run Sanity Tests
 	ansible-galaxy collection install --force $(TARBALL_NAME) -p ./ansible_collections
 	cd ./ansible_collections/cisco/cml && git init .
 	$(VENV_BIN)/pip uninstall -y ansible-base
-	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.10.tar.gz --disable-pip-version-check
+	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.13.tar.gz --disable-pip-version-check
 	cd ./ansible_collections/cisco/cml && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
 	$(VENV_BIN)/pip uninstall -y ansible-base
-	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.11.tar.gz --disable-pip-version-check
+	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/stable-2.14.tar.gz --disable-pip-version-check
 	cd ./ansible_collections/cisco/cml && ../../../$(VENV_BIN)/ansible-test sanity --docker -v --color
 	$(VENV_BIN)/pip uninstall -y ansible-base
 	$(VENV_BIN)/pip install https://github.com/ansible/ansible/archive/devel.tar.gz --disable-pip-version-check
