@@ -114,7 +114,6 @@ EXAMPLES = r"""
         config: "{{ day0_config | default(omit) }}"
 """
 
-import traceback
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 

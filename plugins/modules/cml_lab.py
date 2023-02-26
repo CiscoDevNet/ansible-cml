@@ -106,7 +106,6 @@ EXAMPLES = r"""
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 import os
-import traceback
 
 
 def run_module():

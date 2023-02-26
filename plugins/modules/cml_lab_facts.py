@@ -61,7 +61,6 @@ EXAMPLES = r"""
         var: results
 """
 
-import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.cml.plugins.module_utils.cml_utils import cmlModule, cml_argument_spec
 
