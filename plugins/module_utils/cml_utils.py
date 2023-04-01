@@ -65,7 +65,7 @@ class cmlModule(object):
         for node in lab.nodes():
             if node.label == name:
                 return node
-        return None     
+        return None
 
     def exit_json(self, **kwargs):
 
