@@ -184,7 +184,7 @@ def run_module():
         cml.exit_json(**cml.result)
         return
     
-    link = get_link_by_nodes(source_node, destination_node_1)
+    link = cml.get_link_by_nodes(source_node, destination_node_1)
 
     if cml.params['action'] == 'create':
         if link == None: # if the link does not exist
