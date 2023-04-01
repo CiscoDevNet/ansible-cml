@@ -35,6 +35,7 @@ description:
   - Node names need to be specified to create the link
   - Node links can be updated to point to different nodes: node1->node2 is changed to node1->node3
   - Node links can be deleted
+  - Note: when updating, all three nodes must be specified 
 author:
   - Paul Pajerski (@ppajersk)
 requirements:
@@ -58,15 +59,15 @@ options:
         required: true
         type: str
 
-    destination_node_1:
+    destination_node:
         description: The name of the second node
         required: true
         type: str    
 
-    destination_node_2:
+    update_node:
         description: The name of the third node, this node is only used in update commands
-        where if provided alongside the update action, will update the link between source_node and destination_node_1
-        to link between source_node and destination_node_2
+        where if provided alongside the update action, will update the link between source_node and destination_node
+        to link between source_node and update_node
         required: false
         type: str    
 
@@ -106,7 +107,7 @@ EXAMPLES = r"""
         password: "{{ cml_password }}"
         lab: "{{ cml_lab }}"
         source_node: "{{ source_node }}"
-        destination_node_1: "{{ destination_node_1 }}"
+        destination_node: "{{ destination_node }}"
         action: create
 
 - name: Update a link between two CML nodes
@@ -121,8 +122,8 @@ EXAMPLES = r"""
         password: "{{ cml_password }}"
         lab: "{{ cml_lab }}"
         source_node: "{{ source_node }}"
-        destination_node_1: "{{ destination_node_1 }}"
-        destination_node_2: "{{ destination_node_2 }}"
+        destination_node: "{{ destination_node }}"
+        update_node: "{{ update_node }}"
         action: update
 
 - name: Delete a link between two CML nodes
@@ -137,7 +138,7 @@ EXAMPLES = r"""
         password: "{{ cml_password }}"
         lab: "{{ cml_lab }}"
         source_node: "{{ source_node }}"
-        destination_node_1: "{{ destination_node_1 }}"
+        destination_node: "{{ destination_node }}"
         action: delete
 """
 
@@ -149,9 +150,10 @@ def run_module():
     argument_spec = cml_argument_spec()
     argument_spec.update(
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
+        action=dict(type='str'),
         source_node=dict(type='str'),
-        destination_node_1=dict(type='str'),
-        destination_node_2=dict(type='str'),
+        destination_node=dict(type='str'),
+        update_node=dict(type='str'),
         tags=dict(type='list', elements='str'),
         x=dict(type='int'),
         y=dict(type='int'),
@@ -176,43 +178,42 @@ def run_module():
 
     # get both nodes by name
     source_node = cml.get_node_by_name(lab, cml.params['source_node'])
-    destination_node_1 = cml.get_node_by_name(lab, cml.params['destination_node_1'])
-    destination_node_2 = cml.get_node_by_name(lab, cml.params['destination_node_2'])
+    destination_node = cml.get_node_by_name(lab, cml.params['destination_node'])
+    update_node = cml.get_node_by_name(lab, cml.params['update_node'])
 
-    if source_node == None or destination_node_1 == None:
+    if source_node == None or destination_node == None:
         cml.fail_json("One or more nodes cannot be found. Nodes need to be created before a link can be established")
         cml.exit_json(**cml.result)
         return
     
-    link = cml.get_link_by_nodes(source_node, destination_node_1)
+    link = cml.get_link_by_nodes(lab, source_node, destination_node)
 
     if cml.params['action'] == 'create':
         if link == None: # if the link does not exist
-            link = lab.connect_two_nodes(source_node, destination_node_1) 
+            link = lab.connect_two_nodes(source_node, destination_node) 
             cml.result['changed'] = True
         else:
             cml.fail_json("Link between nodes already exists") 
     elif cml.params['action'] == 'update':
         if link is not None:
-            if destination_node_2 is not None: # only need to check if destination_node_2 is none here
+            if update_node is not None: # only need to check if update_node is none here
                 lab.remove_link(link) # remove current link
-                link = lab.connect_two_nodes(source_node, destination_node_2) # create new link
+                link = lab.connect_two_nodes(source_node, update_node) # create new link
                 cml.result['changed'] = True
             else:
-               cml.fail_json("destination_node_2 cannot be found or does not exist")     
+               cml.fail_json("update_node cannot be found or does not exist")     
         else:
-            cml.fail_json("Link between nodes does not exists")      
+            cml.fail_json("Link between nodes does not exist")      
     elif cml.params['action'] == 'delete':
         if link is not None:
             lab.remove_link(link) # remove current link
             cml.result['changed'] = True
         else:
-            cml.fail_json("Link between nodes does not exists") 
+            cml.fail_json("Link between nodes does not exist") 
     cml.exit_json(**cml.result)
 
 def main():
     run_module()
-
 
 if __name__ == '__main__':
     main()    
