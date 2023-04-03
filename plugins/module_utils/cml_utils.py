@@ -68,8 +68,7 @@ class cmlModule(object):
                 return node
         return None
 
-
-   def exit_json(self, **kwargs):
+    def exit_json(self, **kwargs):
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
