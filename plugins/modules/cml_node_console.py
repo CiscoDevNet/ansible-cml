@@ -34,11 +34,13 @@ def run_module():
     argument_spec.update(
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
         node_name=dict(type='str', required=True),
+        result_key=dict(type='str', required=True),
         command=dict(type='str', required=True),
         tags=dict(type='list', elements='str'),
         x=dict(type='int'),
         y=dict(type='int'),
         wait=dict(type='bool', default=False),
+        report=dict(type='bool', default=False),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -50,6 +52,10 @@ def run_module():
         supports_check_mode=True,
     )
     cml = cmlModule(module)
+
+    cml.result['result_key'] = cml.params['result_key']
+    cml.result['command'] = ''
+    cml.result['report'] = cml.params['report']
 
     labs = cml.client.find_labs_by_title(cml.params['lab'])
 
@@ -64,17 +70,21 @@ def run_module():
         cml.fail_json("Cannot connect to lab {0}".format(cml.params['lab']))
 
     lab_instance.pyats.sync_testbed( cml.user, cml.password )
+    node = cml.get_node_by_name(lab_instance, cml.params['node_name'])
 
-    for n in lab_instance.nodes():
-        if node_name in n.label:
-            break
+    if node is not None:
+        node.start(wait=True)
+        while ( node.has_converged() == False ): 
+            pass
+        command = node.run_pyats_command(cml.params['command'])
+        if cml.params['report']:
+            cml.result['command'] = command 
+        cml.result['changed'] = True
+    else:
+        cml.fail_json("Cannot locate nod {0}".format(node))
 
-
-    n.start(wait=True)
-    print(n.run_pyats_command("hostname -I").split(' ')[0]) 
-
-    cml.result['changed'] = True
-    cml.exit_json(**cml.result)
+    cml.exit_json(**cml.result)        
+    
 
 def main():
     run_module()
