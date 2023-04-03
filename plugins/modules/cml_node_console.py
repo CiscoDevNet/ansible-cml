@@ -32,9 +32,9 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     argument_spec = cml_argument_spec()
     argument_spec.update(
-        name=dict(type='str', required=True),
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
-        command=dict(type='str'),
+        node_name=dict(type='str', required=True),
+        command=dict(type='str', required=True),
         tags=dict(type='list', elements='str'),
         x=dict(type='int'),
         y=dict(type='int'),
@@ -52,9 +52,33 @@ def run_module():
     cml = cmlModule(module)
 
     labs = cml.client.find_labs_by_title(cml.params['lab'])
+
     if len(labs) > 0:
         lab = labs[0]
     else:
         cml.fail_json("Cannot find lab {0}".format(cml.params['lab']))
 
-    node = cml.get_node_by_name(lab, cml.params['name'])    
+    lab_instance = cml.client.join_existing_lab(lab.id)
+
+    if lab_instance is None:
+        cml.fail_json("Cannot connect to lab {0}".format(cml.params['lab']))
+
+    lab_instance.pyats.sync_testbed( cml.user, cml.password )
+
+    for n in lab_instance.nodes():
+        if node_name in n.label:
+            break
+
+
+    n.start(wait=True)
+    print(n.run_pyats_command("hostname -I").split(' ')[0]) 
+
+    cml.result['changed'] = True
+    cml.exit_json(**cml.result)
+
+def main():
+    run_module()
+
+
+if __name__ == '__main__':
+    main()
