@@ -7,6 +7,7 @@ from ansible.module_utils.basic import env_fallback, missing_required_lib
 VIRL2CLIENT_IMPORT_ERROR = None
 try:
     from virl2_client import ClientLibrary
+    from pyats.topology import loader
 except ImportError:
     HAS_VIRL2CLIENT = False
     VIRL2CLIENT_IMPORT_ERROR = traceback.format_exc()
