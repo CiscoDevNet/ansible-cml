@@ -67,6 +67,13 @@ class cmlModule(object):
                 return node
         return None
 
+    def get_link_by_nodes(self, lab, node1, node2):
+        for link in lab.links():
+            if ((link.node_a.label == node1.label and link.node_b.label == node2.label) 
+                or (link.node_b.label == node1.label and link.node_a.label == node2.label)):
+                return link
+        return None        
+
     def exit_json(self, **kwargs):
 
         self.result.update(**kwargs)
