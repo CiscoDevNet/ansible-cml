@@ -150,10 +150,10 @@ def run_module():
     argument_spec = cml_argument_spec()
     argument_spec.update(
         lab=dict(type='str', required=True, fallback=(env_fallback, ['CML_LAB'])),
-        action=dict(type='str'),
-        source_node=dict(type='str'),
-        destination_node=dict(type='str'),
-        update_node=dict(type='str'),
+        action=dict(type='str', required=True),
+        source_node=dict(type='str', required=True),
+        destination_node=dict(type='str', required=True),
+        update_node=dict(type='str', required=False),
         tags=dict(type='list', elements='str'),
         x=dict(type='int'),
         y=dict(type='int'),
