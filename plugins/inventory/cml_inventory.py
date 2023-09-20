@@ -60,6 +60,7 @@ DOCUMENTATION = r'''
 
 import os
 import traceback
+import re
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text
@@ -185,6 +186,25 @@ class InventoryModule(BaseInventoryPlugin):
             }
             interface_list = []
             ansible_host = None
+            ansible_port = None
+            # pat_regex_list = [r"^pat:tcp:(\d+):22", r"^pat:(\d+):22"]
+            for tag in node.tags():
+                fact_match = re.search(r"^ansible:([^=]+)=(\d+)$", tag)
+                pat_match = re.search(r"^pat:(?:tcp|udp)?:?(\d+):(\d+)", tag)
+                if fact_match:
+                    self.display.vvv("Add fact to node {0}: {1}={2}".format(node.label, fact_match.group(1), fact_match.group(2)))
+                    self.inventory.set_variable(node.label, fact_match.group(1), fact_match.group(2))
+                # for regex_pattern in pat_regex_list:
+                #     # Use re.search to find a match
+                elif pat_match:
+                    self.display.vvv("Found PAT: outside_port={0}, inside_port={1}".format(pat_match.group(1), pat_match.group(2)))
+                    # Extract values from capture groups
+                    # outside_port = match.group(1)
+                    ansible_host = self.host
+                    # ansible_port = match.group(1)
+                    # break  # Exit the inner loop once a match is found
+                else:
+                    continue  # Continue with the next string if no match was found
             for interface in node.interfaces():
                 if node.state == 'BOOTED':
                     # Fill out the oper data if the node is not fully booted
@@ -211,6 +231,8 @@ class InventoryModule(BaseInventoryPlugin):
             cml.update({'interfaces': interface_list})
             if ansible_host:
                 self.inventory.set_variable(node.label, 'ansible_host', ansible_host)
+            if ansible_port:
+                self.inventory.set_variable(node.label, 'ansible_port', ansible_port)
             self.inventory.set_variable(node.label, 'cml_facts', cml)
             self.display.vvv("Adding {0}({1}) to group {2}, state: {3}, ansible_host: {4}".format(
                 node.label, node.node_definition, self.group, node.state, ansible_host))
