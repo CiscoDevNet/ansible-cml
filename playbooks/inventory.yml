@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/ansible-playbook.json
 - hosts: cml_hosts
   connection: local
   gather_facts: no
