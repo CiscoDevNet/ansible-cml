@@ -162,7 +162,7 @@ def run_module():
                 lab.start(wait=cml.params['wait'])
             lab.title = cml.params['lab']
             cml.result['changed'] = True
-        elif lab.state() == "STOPPED":
+        elif lab.state() in ("DEFINED_ON_CORE", "STOPPED"):
             lab.start(wait=cml.params['wait'])
             cml.result['changed'] = True
     elif cml.params['state'] == 'absent':
