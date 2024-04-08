@@ -1,9 +1,10 @@
+# yaml-language-server: $schema=https://json.schemastore.org/ansible-playbook.json
 - hosts: cml_hosts
   connection: local
   gather_facts: no
   tasks:
     - debug:
-        msg: "Node: {{ inventory_hostname }}({{ cml_facts.node_definition }}), State: {{ cml_facts.state }}, Address: {{ ansible_host }}"
+        msg: "Node: {{ inventory_hostname }}({{ cml_facts.node_definition }}), State: {{ cml_facts.state }}, Address: {{ ansible_host }}:{{ ansible_port | default('22') }}"
       when: ansible_host is defined
     # - debug:
     #     var: cml_facts
