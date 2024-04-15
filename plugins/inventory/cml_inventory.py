@@ -153,8 +153,6 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.set_variable('all', 'cml_group', self.group)
 
         self.inventory.set_variable('all', 'cml_host', self.host)
-        self.inventory.set_variable('all', 'cml_username', self.username)
-        self.inventory.set_variable('all', 'cml_password', self.password)
         self.inventory.set_variable('all', 'cml_lab', self.lab)
 
         url = 'https://{0}'.format(self.host)
