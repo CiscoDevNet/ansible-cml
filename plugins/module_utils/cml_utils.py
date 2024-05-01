@@ -76,3 +76,21 @@ class cmlModule(object):
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
+
+class cmlPlugin(object):
+
+    def __init__(self, host, user, password, validate_certs=False):
+        self.host = host
+        self.user = user
+        self.password = password
+        self.validate_certs = validate_certs
+
+        self.client = None
+
+        if not HAS_VIRL2CLIENT:
+            raise AnsibleError("Missing_required_lib('virl2_client')")
+
+        self.login()
+
+    def login(self):
+        self.client = ClientLibrary('https://{0}'.format(self.host), self.user, self.password, ssl_verify=self.validate_certs)
