@@ -77,9 +77,11 @@ class cmlModule(object):
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
 
+
 class cmlPlugin(object):
 
-    def __init__(self, host, user, password, validate_certs=False):
+    def __init__(self, lookup, host, user, password, validate_certs=False):
+        self.lookup = lookup
         self.host = host
         self.user = user
         self.password = password
@@ -88,7 +90,7 @@ class cmlPlugin(object):
         self.client = None
 
         if not HAS_VIRL2CLIENT:
-            raise AnsibleError("Missing_required_lib('virl2_client')")
+            lookup.fail("Missing_required_lib('virl2_client')")
 
         self.login()
 
