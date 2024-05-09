@@ -25,6 +25,13 @@
       delegate_to: localhost
       run_once: yes
 
+    - assert:
+        that:
+          - startup == 'all' or startup == 'host'
+        msg: "startup must be either 'all' or 'host'"
+      delegate_to: localhost
+      run_once: yes
+
     - name: Create the lab
       cisco.cml.cml_lab:
         host: "{{ cml_host }}"
